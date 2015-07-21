@@ -23,6 +23,6 @@ for line in File:
 # Calculate frequency tables!
 
 CodonTable = FrequencyTable(Genes)
-            
+
 for IdxC in sorted(list(CodonTable.keys())):
-    print IdxC, CodonTable[IdxC]
+    print IdxC, CodonTable[IdxC][0], CodonTable[IdxC][1], CodonTable[IdxC][2], CodonTable[IdxC][3]

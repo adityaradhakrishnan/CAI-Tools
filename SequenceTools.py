@@ -44,7 +44,7 @@ def FrequencyTable(*arg):
 	Frequencies = {}
 
 	for IdxC in CodonTable:
-		Frequencies[IdxC] = [AACodon[IdxC], CodonTable[IdxC]/AACounts[AACodon[IdxC]], CodonTable[IdxC]/Count*1000, CodonTable[IdxC]]
+		Frequencies[IdxC] = [AACodon[IdxC], round(CodonTable[IdxC]/AACounts[AACodon[IdxC]],3), round(CodonTable[IdxC]/Count*1000,3), CodonTable[IdxC]]
 
 	return Frequencies
 	
