@@ -23,3 +23,57 @@ def ImportGenome(InFile):
 	File = open(InFile.split('.')[0] + '.pckl','w')
 	pickle.dump(ChromDict, File)
 	File.close()
+	
+def NameConversionTable(InFile):
+	File     = open(InFile)
+	NameDict = {}
+	
+	for line in File:
+		Split = line.rstrip('\n').split(' ')
+		
+		if Split[4] == '\"\"':
+			pass
+		else:
+			NameDict[Split[4]] = Split[2]
+			
+	File.close()
+	
+	File = open(InFile.split('.')[0] + '.pckl','w')
+	pickle.dump(NameDict, File)
+	File.close()
+	
+def OntologyAssign():
+	GODict = {}
+	
+	for IdxS in ['Component','Function','Process']:
+		File = open('4-Ontologies/' + IdxS + '-Slim.csv')
+		for line in File:
+			Split = line.rstrip('\n').split('\t')
+			for Idx in Split[4].split(','):
+				if Idx in GODict:
+					GODict[Idx].append(int(Split[0].zfill(7)))
+				else:
+					GODict[Idx] = [int(Split[0].zfill(7))]
+					
+		File.close()
+	
+	File = open('4-Ontologies/GOSlim.pckl','w')
+	pickle.dump(GODict,File)
+	File.close()
+
+def AbundanceAssign():
+	AbundanceDict = {}	
+	
+	File = open('5-Expression/Expression.txt')
+	for line in File:
+		Split = line.rstrip('\n').split(' ')
+		if Split[1] != '\"\"':
+			AbundanceDict[Split[0]] = float(Split[1])
+		else:
+			AbundanceDict[Split[0]] = 0.0
+			
+	File = open('5-Expression/Expression.pckl','w')
+	pickle.dump(AbundanceDict,File)
+	File.close()
+	
+AbundanceAssign()

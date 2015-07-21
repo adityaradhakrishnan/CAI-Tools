@@ -1,8 +1,6 @@
 # Given a UCSC Genome Browser Table Output and a genome
 # generate the sequence of all listed transcripts.
 
-import pickle
-
 from string import maketrans
 
 class Gene(object):
@@ -28,3 +26,9 @@ class Gene(object):
 			
 		self.sequence  = Sequence
 		self.codonlist = map(''.join, zip(*[iter(Sequence)]*3))
+		
+	def DefineOntologies(self,inList):
+		self.ontology  = inList
+		
+	def DefineExpression(self,inFloat):
+		self.expression = inFloat
