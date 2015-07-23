@@ -42,7 +42,7 @@ def NameConversionTable(InFile):
 	pickle.dump(NameDict, File)
 	File.close()
 	
-def OntologyAssign():
+def OntologyBuild():
 	GODict = {}
 	
 	for IdxS in ['Component','Function','Process']:
@@ -61,7 +61,7 @@ def OntologyAssign():
 	pickle.dump(GODict,File)
 	File.close()
 
-def AbundanceAssign():
+def AbundanceBuild():
 	AbundanceDict = {}	
 	
 	File = open('5-Expression/Expression.txt')
@@ -69,11 +69,27 @@ def AbundanceAssign():
 		Split = line.rstrip('\n').split(' ')
 		if Split[1] != '\"\"':
 			AbundanceDict[Split[0]] = float(Split[1])
-		else:
-			AbundanceDict[Split[0]] = 0.0
+	
+	File.close()
 			
 	File = open('5-Expression/Expression.pckl','w')
 	pickle.dump(AbundanceDict,File)
 	File.close()
 	
-AbundanceAssign()
+def HalfLifeBuild():
+	HalfLifeDict = {}
+	
+	File = open('6-RNAHalfLives/HalfLives.tsv')
+	File.readline()
+	
+	for line in File:
+		Split = line.rstrip('\n').split('\t')
+		HalfLifeDict[Split[0]] = [float(Split[i]) for i in xrange(2,6)]
+	
+	File.close()
+		
+	File = open('6-RNAHalfLives/HalfLives.pckl','w')
+	pickle.dump(HalfLifeDict,File)
+	File.close()
+	
+AbundanceBuild()

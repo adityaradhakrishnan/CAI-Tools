@@ -1,6 +1,5 @@
-from Gene import *
-from SequenceTools import *
-
+from Gene import Gene
+import SequenceTools
 import pickle
 
 # Load the reference genome
@@ -9,16 +8,19 @@ PickleNames   = open('1-CDS-List/NameConvert.pckl')
 PickleGenome  = open('2-Ref-Genome/Genome.pckl')
 PickleGODict  = open('4-Ontologies/GOSlim.pckl')
 PickleExpress = open('5-Expression/Expression.pckl')
+PickleHL      = open('6-RNAHalfLives/HalfLives.pckl')
 
 Names         = pickle.load(PickleNames)
 Genome        = pickle.load(PickleGenome)
 GODict        = pickle.load(PickleGODict)
 Expression    = pickle.load(PickleExpress)
+HalfLives     = pickle.load(PickleHL)
  
 PickleNames.close()
 PickleGenome.close()
 PickleGODict.close()
 PickleExpress.close()
+PickleHL.close()
 
 # Generate a list of all the gene sequences
 
@@ -27,38 +29,26 @@ Genes = {}
     
 for line in File:
 	Name = line.split('\t')[1]
-	Genes[Name] = Gene(line)
+	Genes[Name] = Gene(line, GODict, Expression, HalfLives)
 	Genes[Name].DefineSeq(Genome[Genes[Name].chr])
+	Genes[Name].UWGenome()
 	
-	# Ontology assign
-	
-	if Name in GODict:
-		Genes[Name].DefineOntologies(GODict[Name])
-	else:
-		Genes[Name].DefineOntologies([])
-		
-	# Expression assign
-	
-	if Name in Expression:
-		Genes[Name].DefineExpression(Expression[Name])
-	else:
-		Genes[Name].DefineExpression(0.0)
-
 File.close()
-    
-# Calculate frequency tables!
 
-List = []
+File = open('Analysis/UWBoundary-RNA.tsv','w')
+File.write('Gene\tPolyAHL\tHL\tUWCounts\tUWFrac\n')
 
 for IdxG in Genes:
-	if Genes[IdxG].expression > 100000:
-		List.append(IdxG)
+	if IdxG in HalfLives:
+		File.write(IdxG + '\t' + str(Genes[IdxG].halflife[0]) + '\t' + str(Genes[IdxG].halflife[1]) + '\t' + str(Genes[IdxG].uwcount) + '\t' + str(Genes[IdxG].uwfrac) + '\n')
+			
+File.close()
 
-CAIGenes = FrequencyTable(Genes,List)
-AllGenes = FrequencyTable(Genes)
+File = open('Analysis/UWBoundary-Protein.tsv','w')
+File.write('Gene\tExpression\tUWCounts\tUWFrac\n')
 
-for Idx in sorted(CAIGenes.keys()):
-	print Idx, CAIGenes[Idx][0], '{:6.3f}'.format(CAIGenes[Idx][1]/AllGenes[Idx][1])
-
-print CAIGenes['AGA'][1]
-print AllGenes['AGA'][1]		
+for IdxG in Genes:
+	if IdxG in Expression:
+		File.write(IdxG + '\t' + str(Genes[IdxG].expression) + '\t' + str(Genes[IdxG].uwcount) + '\t' + str(Genes[IdxG].uwfrac) + '\n')
+			
+File.close()
