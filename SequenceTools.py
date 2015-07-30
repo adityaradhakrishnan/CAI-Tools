@@ -48,3 +48,32 @@ def FrequencyTable(*arg):
 
 	return Frequencies
 	
+def CAICalculate(FrequencyTable):
+	
+	AADict   = {}
+	FreqDict = {}
+	
+	for IdxC in FrequencyTable:
+		if FrequencyTable[IdxC][0] in AADict:
+			AADict[FrequencyTable[IdxC][0]].append(IdxC)
+			FreqDict[FrequencyTable[IdxC][0]].append(FrequencyTable[IdxC][1])
+		else:
+			AADict[FrequencyTable[IdxC][0]]   = [IdxC]
+			FreqDict[FrequencyTable[IdxC][0]] = [FrequencyTable[IdxC][1]]
+			
+	for IdxC in FreqDict:
+		Max = 0.0
+		for IdxN in FreqDict[IdxC]:
+			if IdxN > Max:
+				Max = IdxN
+		
+		for IdxN in range(0,len(FreqDict[IdxC])):
+			FreqDict[IdxC][IdxN] = FreqDict[IdxC][IdxN]/Max
+			
+	CAIDict = {}		
+			
+	for IdxC in FreqDict:
+		for IdxN in range(0,len(FreqDict[IdxC])):
+			CAIDict[AADict[IdxC][IdxN]] = FreqDict[IdxC][IdxN]
+			
+	return CAIDict

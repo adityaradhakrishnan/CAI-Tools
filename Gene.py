@@ -2,6 +2,8 @@
 # generate the sequence of all listed transcripts.
 
 from string import maketrans
+import math
+import numpy as np
 
 class Gene(object):
 	
@@ -28,7 +30,7 @@ class Gene(object):
 		if self.name in Expression:
 			self.expression = Expression[self.name]
 		else:
-			self.expression = 'DNE'
+			self.expression = 0.0
 			
 		# Define expression
 
@@ -44,10 +46,53 @@ class Gene(object):
                 		Sequence += InString[self.exstart[Idx]:self.exstop[Idx]]
             		else:
                 		Sequence += InString[self.exstart[len(self.exstart) - Idx - 1]:self.exstop[len(self.exstart) - Idx - 1]][::-1].translate(maketrans("TAGC", "ATCG"))
-			
+		
+		self.length    = len(Sequence)	
 		self.sequence  = Sequence
 		self.codonlist = map(''.join, zip(*[iter(Sequence)]*3))
 		
+	def ProfilingDensity(self, DensityDict, Samples):
+		DensityWrapper = []
+		RPKMWrapper    = []
+		
+		for Idx in Samples:
+			Density = np.array([])	
+			for IdxN in xrange(0,len(self.exstart)):
+				if self.strand == '+':
+					Density = np.concatenate((Density, DensityDict[Idx][0][self.chr][self.exstart[IdxN]:self.exstop[IdxN]]))
+				else:
+					Density = np.concatenate((Density, DensityDict[Idx][1][self.chr][self.exstart[len(self.exstart) - IdxN - 1]:self.exstop[len(self.exstart) - IdxN - 1]][::-1]))
+					
+			DensityWrapper.append(Density)
+			RPKMWrapper.append(np.sum(Density)/self.length)
+			
+		self.profdensity = DensityWrapper
+		self.profRPKM    = RPKMWrapper	
+	
+	def RNASeqDensity(self, DensityDict, Samples):
+		DensityWrapper = []
+		RPKMWrapper    = []
+
+		for Idx in Samples:
+			Density = np.array([])	
+			for IdxN in xrange(0,len(self.exstart)):
+				if self.strand == '+':
+					Density = np.concatenate((Density, DensityDict[Idx][0][self.chr][self.exstart[IdxN]:self.exstop[IdxN]]))
+				else:
+					Density = np.concatenate((Density, DensityDict[Idx][1][self.chr][self.exstart[len(self.exstart) - IdxN - 1]:self.exstop[len(self.exstart) - IdxN - 1]][::-1]))
+
+			DensityWrapper.append(Density)
+			RPKMWrapper.append(np.sum(Density)/self.length)
+
+		self.mRNAdensity = DensityWrapper
+		self.mRNARPKM    = RPKMWrapper		
+				
+	def CalculateCAI(self,CAIDict):
+		CAI      = 0.0
+		for Idx in self.codonlist:
+			CAI += math.log(CAIDict[Idx],2)
+			
+		self.CAI = 2**(CAI/len(self.codonlist))
 
 	def UWBoundaries(self):
 		Count = 0
