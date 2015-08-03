@@ -60,7 +60,9 @@ LengthDict = {
     'chrXVI':948066,     'chrM':85779
 }
 
-Samples     = ['../WIGs/FC278-L5-P1-CAGATC-DhOE','../WIGs/OE','../WIGs/FC278-L6-P1-ACTTGA-WT']
+ProfilingSamples = ['../WIGs/FC278-L5-P1-CAGATC-DhOE','../WIGs/FC278-L5-P1-TGACCA-DhKO','../WIGs/FC278-L6-P1-ACTTGA-WT']
+RNASeqSamples    = ['../WIGs/HBGN1ADXX-1-CAGATC-DhOE','../WIGs/HBGN1ADXX-1-TGACCA-DhKO','../WIGs/HBGN1ADXX-2-ACTTGA-WT']
+
 DensityDict = {}
 
 for Idx in Samples:
@@ -78,19 +80,24 @@ for line in File:
 	Genes[Name] = Gene(line, GODict, Expression, HalfLives)
 	Genes[Name].DefineSeq(Genome[Genes[Name].chr])
 	Genes[Name].CalculateCAI(CAIDict)
-	Genes[Name].ProfilingDensity(DensityDict,Samples)
+	Genes[Name].ProfilingDensity(DensityDict, ProfilingSamples)
+	Genes[Name].RNASeqDensity(DensityDict, RNASeqSamples)
 
 File.close()
 
 FileOut = open('Test.txt','w')
 
 for IdxG in Genes:
-	if Genes[IdxG].RPKM[0] > 0.0:
-		if Genes[IdxG].RPKM[1] > 0.0:
-			if Genes[IdxG].RPKM[2] > 0.0:
-				if IdxG[0] == 'Y' or IdxG[0] == 'Q':
-					FileOut.write(IdxG + '\t' + '{0:.1f}'.format(Genes[IdxG].CAI) + '\t' + str(Genes[IdxG].RPKM[0]) + '\t' + str(Genes[IdxG].RPKM[1]) + '\t' + str(Genes[IdxG].RPKM[2]) + '\n')
+	FlagCheck = 1.0
+	for Idx in xrange(0,3):
+		FlagCheck = FlagCheck*Genes[IdxG].profRPKM[Idx]*Genes[IdxG].mRNARPKM[Idx]
+	if FlagCheck == 1.0:
+		if IdxG[0] == 'Y' or IdxG[0] == 'Q':
+			FileOut.write(IdxG + '\t' + '{0:.1f}'.format(Genes[IdxG].CAI) + '\t')
+			for Idx in xrange(0,3):
+				FileOut.write(str(Genes[IdxG].profRPKM[Idx]) + '\t' + str(Genes[IdxG].mRNARPKM[Idx]) + '\t')
 		
+			FileOut.write('\n')
 print time.time() - Start
 
 	
