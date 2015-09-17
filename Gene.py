@@ -49,7 +49,11 @@ class Gene(object):
 		
 		self.length    = len(Sequence)	
 		self.sequence  = Sequence
-		self.codonlist = map(''.join, zip(*[iter(Sequence)]*3))
+		CodonLists     = []
+		CodonLists.append(map(''.join, zip(*[iter(Sequence)]*3)))
+		CodonLists.append(map(''.join, zip(*[iter(Sequence[1:-2])]*3)))
+		CodonLists.append(map(''.join, zip(*[iter(Sequence[2:-1])]*3)))
+		self.codonlist = CodonLists
 		
 	def ProfilingDensity(self, DensityDict, Samples):
 		DensityWrapper = []
@@ -64,7 +68,7 @@ class Gene(object):
 					Density = np.concatenate((Density, DensityDict[Idx][1][self.chr][self.exstart[len(self.exstart) - IdxN - 1]:self.exstop[len(self.exstart) - IdxN - 1]][::-1]))
 					
 			DensityWrapper.append(Density)
-			RPKMWrapper.append(np.sum(Density)/self.length)
+			RPKMWrapper.append(np.sum(Density)/self.length*1000)
 			
 		self.profdensity = DensityWrapper
 		self.profRPKM    = RPKMWrapper	
@@ -82,17 +86,22 @@ class Gene(object):
 					Density = np.concatenate((Density, DensityDict[Idx][1][self.chr][self.exstart[len(self.exstart) - IdxN - 1]:self.exstop[len(self.exstart) - IdxN - 1]][::-1]))
 
 			DensityWrapper.append(Density)
-			RPKMWrapper.append(np.sum(Density)/self.length)
+			RPKMWrapper.append(np.sum(Density))
 
 		self.mRNAdensity = DensityWrapper
 		self.mRNARPKM    = RPKMWrapper		
 				
 	def CalculateCAI(self,CAIDict):
-		CAI      = 0.0
-		for Idx in self.codonlist:
-			CAI += math.log(CAIDict[Idx],2)
+		CAIList = []
+		
+		for IdxF in self.codonlist:
+			CAI      = 0.0
+			for Idx in IdxF:
+				CAI += math.log(CAIDict[Idx],2)
+				
+			CAIList.append(2**(CAI/len(IdxF)))
 			
-		self.CAI = 2**(CAI/len(self.codonlist))
+		self.CAI = CAIList
 
 	def UWBoundaries(self):
 		Count = 0

@@ -1,5 +1,6 @@
 from Gene import Gene
 
+import numpy as np
 import pickle
 
 def ImportGenome(InFile):				
@@ -92,4 +93,54 @@ def HalfLifeBuild():
 	pickle.dump(HalfLifeDict,File)
 	File.close()
 	
-AbundanceBuild()
+def ClipSeqProcess():
+	CAIDict    = pickle.load(open('7-CAI/Gene-CAI.pckl'))
+	
+	Conditions = ['Dhh1-V1','Dhh1-V2','Sbp1-V1','Sbp1-V2','Lsm1-V1','Lsm1-V2','Pat1-V1','Pat1-V2','WT']
+	Gene       = {}
+	
+	for IdxC in Conditions:
+		File = open('9-CLIP-Seq/' + IdxC + '.txt')
+		File.readline()
+		
+		for line in File:
+			Split = line.rstrip('\n').split('\t')
+			if Split[0] in Gene:
+				Gene[Split[0]][IdxC]  = np.array([float(Idx) for Idx in Split[int(Split[1])+6:-1*int(Split[5])]])
+			else:
+				Gene[Split[0]] = {IdxC: np.array([float(Idx) for Idx in Split[int(Split[1])+6:-1*int(Split[5])]])}
+	
+		File.close()
+	
+	FileOut = open('9-CLIP-Seq/RPKM.txt','w')
+	
+	Counts = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+	
+	for Idx in range(0,9):
+		IdxC = Conditions[Idx]
+		for IdxG in Gene:
+			Counts[Idx] += np.sum(Gene[IdxG][IdxC])
+
+	print Counts
+				
+	for IdxG in Gene:
+		Check = 1.0
+		for IdxC in Gene[IdxG]:
+			Check = Check*np.sum(Gene[IdxG][IdxC])
+			
+		if Check == 0.0:
+			pass
+		else:
+			if IdxG in CAIDict:
+				Out = '0.3'	if (round(CAIDict[IdxG]*10) < 4) else str(CAIDict[IdxG])[0:3]
+				FileOut.write(IdxG + '\t' + Out + '\t')
+				for Idx in range(0,9):
+					IdxC = Conditions[Idx]
+					RPM  = np.sum(Gene[IdxG][IdxC])/Counts[Idx]*1000000
+					FileOut.write(str(RPM/Gene[IdxG][IdxC].size*1000) + '\t')
+			
+				FileOut.write('\n')
+		
+		
+	
+ClipSeqProcess()
