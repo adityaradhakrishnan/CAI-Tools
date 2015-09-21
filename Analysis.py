@@ -61,24 +61,6 @@ LengthDict = {
 }
 
 
-String = '../Sequencing/2014-12-Dhh1RNASeq/6-WIGs/'
-List   = ['HBGN1ADXX-2-ACTTGA-WT','HBGN1ADXX-1-TGACCA-DhKO','HBGN1ADXX-1-CAGATC-DhOE','HBGN1ADXX-2-TGACCA-T+']
-#ProfilingSamples = ['../WIGs/Profiling/FC278-L6-P1-ACTTGA-WT','../WIGs/Profiling/FC278-L5-P1-TGACCA-DhKO','../WIGs/Profiling/FC278-L5-P1-CAGATC-Old-DhOE']
-RNASeqSamples    = [String + Idx for Idx in List]
-
-#ProfilingDensityDict = {}
-RNASeqDensityDict    = {}   
-
-#for Idx in ProfilingSamples:
-	#print Idx
-	#ProfilingDensityDict[Idx] = LoadDict(Idx, LengthDict)
-
-for Idx in RNASeqSamples:
-	print Idx
-	RNASeqDensityDict[Idx]    = LoadDict(Idx, LengthDict)		
-
-# Generate a list of all the gene sequences
-
 File  = open('1-CDS-List/Coding.txt')
 Genes = {}
     
@@ -87,14 +69,62 @@ for line in File:
 	Genes[Name] = Gene(line, GODict, Expression, HalfLives)
 	Genes[Name].DefineSeq(Genome[Genes[Name].chr])
 	Genes[Name].CalculateCAI(CAIDict)
-	#Genes[Name].ProfilingDensity(ProfilingDensityDict, ProfilingSamples)
-	Genes[Name].RNASeqDensity(RNASeqDensityDict, RNASeqSamples)
+	Genes[Name].CAIWorstRegion(CAIDict)
+	Genes[Name].CAIBestRegion(CAIDict)
 
-FileOut = open('mRNARPKM.txt','w')
-		
+RNAString  = '../WIGs/RNASeq/Unmod/'
+ProfString = '../WIGs/Profiling/'
+
+RNAType    = ['HBGN1ADXX-2-ACTTGA-WT','HBGN1ADXX-1-TGACCA-DhKO','HBGN1ADXX-1-CAGATC-DhOE']
+ProfType   = ['FC278-L6-P1-ACTTGA-WT','FC278-L5-P1-TGACCA-DhKO','FC278-L5-P1-CAGATC-DhOE']
+
+#RNASeqSamples = [RNAString + Idx for Idx in RNAType]
+ProfSamples   = [ProfString + Idx for Idx in ProfType] 
+
+#RNASeqDensityDict = {}   
+ProfDensityDict   = {}   
+
+#for Idx in RNASeqSamples:
+	#print Idx
+	#RNASeqDensityDict[Idx] = LoadDict(Idx, LengthDict)
+
+for Idx in ProfSamples:
+	print Idx
+	ProfDensityDict[Idx]   = LoadDict(Idx, LengthDict)	
+
+BestWT  = np.array([0]*90)
+BestOE  = np.array([0]*90)
+WorstWT = np.array([0]*90)	
+WorstOE = np.array([0]*90)	
+
+Out = open('File.txt','w')
+
 for IdxG in Genes:
-	FileOut.write(IdxG + '\t' + str(Genes[IdxG].length))
-	for Idx in Genes[IdxG].mRNARPKM:
-		FileOut.write('\t' + str(Idx))
+	if IdxG[0] == 'Y':
+		Genes[IdxG].ProfilingDensity(ProfDensityDict, ProfSamples)
 
-	FileOut.write('\n')
+		if Genes[IdxG].CAIBest > 0.9:
+			BestPos  = Genes[IdxG].PosBest*3
+
+			if (BestPos - 30 > 0) and (BestPos + 60 < Genes[IdxG].length):
+				WT = Genes[IdxG].profdensity[0][BestPos-30:(BestPos + 60)]
+				OE = Genes[IdxG].profdensity[2][BestPos-30:(BestPos + 60)]
+				if (np.sum(WT) > 0) and (np.sum(OE) > 0):
+					BestWT  += WT*1000.0/np.sum(WT)
+					BestOE  += OE*1000.0/np.sum(OE)
+
+		if Genes[IdxG].CAIWorst < 0.2:
+			WorstPos = Genes[IdxG].PosWorst*3
+
+			if (WorstPos - 30 > 0) and (WorstPos + 60 < Genes[IdxG].length):
+				WT = Genes[IdxG].profdensity[0][WorstPos-30:(WorstPos + 60)]
+				OE = Genes[IdxG].profdensity[2][WorstPos-30:(WorstPos + 60)]
+				if (np.sum(WT) > 0) and (np.sum(OE) > 0):
+					WorstWT += WT*1000.0/np.sum(WT)
+					WorstOE += OE*1000.0/np.sum(OE)
+
+for Idx in xrange(BestWT.size):
+	Out.write(str(BestWT[Idx]) + '\t' + str(BestOE[Idx]) + '\t')
+	Out.write(str(WorstWT[Idx]) + '\t' + str(WorstOE[Idx]) + '\n')
+
+

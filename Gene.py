@@ -86,7 +86,7 @@ class Gene(object):
 					Density = np.concatenate((Density, DensityDict[Idx][1][self.chr][self.exstart[len(self.exstart) - IdxN - 1]:self.exstop[len(self.exstart) - IdxN - 1]][::-1]))
 
 			DensityWrapper.append(Density)
-			RPKMWrapper.append(np.sum(Density))
+			RPKMWrapper.append(np.sum(Density)/self.length*1000)
 
 		self.mRNAdensity = DensityWrapper
 		self.mRNARPKM    = RPKMWrapper		
@@ -101,7 +101,56 @@ class Gene(object):
 				
 			CAIList.append(2**(CAI/len(IdxF)))
 			
-		self.CAI = CAIList
+		self.CAI    = CAIList
+		CAIStrList  = []
+
+		for Idx in self.CAI:
+			Val = np.around(Idx,decimals=1)
+			if Val < 0.3:
+				Val = 0.3
+			else:
+				Val = float(str(Val)[0:3])
+			CAIStrList.append(Val)
+
+		self.CAIStr = CAIStrList
+
+	def CAIWorstRegion(self,CAIDict):
+		CAIWorst = 1.0
+		PosWorst = 0
+
+		for Idx in xrange(len(self.codonlist[0])-10):
+			CAIList = self.codonlist[0][Idx:Idx+10]
+			CAI     = 0.0
+			for IdxL in CAIList:
+				CAI += math.log(CAIDict[IdxL],2)
+
+			Val     = 2**(CAI/10)
+
+			if Val < CAIWorst:
+				CAIWorst = Val
+				PosWorst = Idx
+
+		self.CAIWorst = CAIWorst
+		self.PosWorst = PosWorst
+
+	def CAIBestRegion(self,CAIDict):
+		CAIBest = 0.0
+		PosBest = 0
+
+		for Idx in xrange(len(self.codonlist[0])-10):
+			CAIList = self.codonlist[0][Idx:Idx+10]
+			CAI     = 0.0
+			for IdxL in CAIList:
+				CAI += math.log(CAIDict[IdxL],2)
+
+			Val     = 2**(CAI/10)
+
+			if Val > CAIBest:
+				CAIBest = Val
+				PosBest = Idx
+
+		self.CAIBest = CAIBest
+		self.PosBest = PosBest
 
 	def UWBoundaries(self):
 		Count = 0
